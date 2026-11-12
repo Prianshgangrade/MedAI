@@ -1,0 +1,40 @@
+# Python virtual environments & bytecode
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# Environment variables & secrets (never commit API keys)
+.env
+.env.*
+!.env.example
+
+# Local development runtime data & logs
+.local_logs/
+*.log
+pids.txt
+*.db
+*.sqlite
+*.sqlite3
+*_local.json
+
+# Generated FAISS index & metadata cache (rebuilt on startup)
+*.index
+advisories_meta.json
+
+# Model / HuggingFace local caches
+.cache/
+huggingface/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo

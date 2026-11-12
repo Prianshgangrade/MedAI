@@ -1,0 +1,185 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  labels:
+    app: user-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: medpulse/user-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8001
+          env:
+            - name: MYSQL_HOST
+              value: "mysql"
+            - name: MYSQL_PORT
+              value: "3306"
+            - name: MYSQL_USER
+              value: "root"
+            - name: MYSQL_PASSWORD
+              value: "rootpass"
+            - name: MYSQL_DB
+              value: "medpulse_db"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: advisory-service
+  labels:
+    app: advisory-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: advisory-service
+  template:
+    metadata:
+      labels:
+        app: advisory-service
+    spec:
+      containers:
+        - name: advisory-service
+          image: medpulse/advisory-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8002
+          env:
+            - name: MONGO_URI
+              value: "mongodb://mongodb:27017/"
+            - name: MONGO_DB
+              value: "medpulse_db"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 8
+            periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-rec-service
+  labels:
+    app: search-rec-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: search-rec-service
+  template:
+    metadata:
+      labels:
+        app: search-rec-service
+    spec:
+      containers:
+        - name: search-rec-service
+          image: medpulse/search-rec-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8003
+          env:
+            - name: ADVISORY_SVC_URL
+              value: "http://advisory-service:8002/advisories"
+            - name: INDEX_PATH
+              value: "/app/advisories.index"
+            - name: META_PATH
+              value: "/app/advisories_meta.json"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatbot-service
+  labels:
+    app: chatbot-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chatbot-service
+  template:
+    metadata:
+      labels:
+        app: chatbot-service
+    spec:
+      containers:
+        - name: chatbot-service
+          image: medpulse/chatbot-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8004
+          env:
+            - name: SEARCH_SVC_URL
+              value: "http://search-rec-service:8003/search"
+            - name: MONGO_URI
+              value: "mongodb://mongodb:27017/"
+            - name: MONGO_DB
+              value: "medpulse_db"
+            - name: GEMINI_API_KEY
+              value: ""
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-ui-service
+  labels:
+    app: gateway-ui-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-ui-service
+  template:
+    metadata:
+      labels:
+        app: gateway-ui-service
+    spec:
+      containers:
+        - name: gateway-ui-service
+          image: medpulse/gateway-ui-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: USER_SVC_URL
+              value: "http://user-service:8001"
+            - name: ADVISORY_SVC_URL
+              value: "http://advisory-service:8002"
+            - name: SEARCH_SVC_URL
+              value: "http://search-rec-service:8003"
+            - name: CHATBOT_SVC_URL
+              value: "http://chatbot-service:8004"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10

@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+requests
+faiss-cpu
+sentence-transformers
+numpy<2.0.0
